@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuse — Regnvarsel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mist:#EBF0F3;
+    --surface:#FFFFFF;
+    --ink:#1E2A38;
+    --slate:#5C7182;
+    --slate-soft:#8B9AA8;
+    --rain:#3E7CB1;
+    --rain-deep:#1FA2B3;
+    --amber:#C98A2B;
+    --line:#D7DFE4;
+    --hairline: rgba(30,42,56,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--mist);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* Header */
+  header{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:34px;flex-wrap:wrap;gap:8px;
+  }
+  .place{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;font-size:15px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--ink);
+  }
+  .place span{color:var(--slate-soft);font-weight:500;}
+  .updated{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;color:var(--slate-soft);
+    display:flex;align-items:center;gap:8px;
+  }
+  .refresh-btn{
+    background:none;border:1px solid var(--line);border-radius:20px;
+    padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    color:var(--slate);cursor:pointer;transition:.15s;
+  }
+  .refresh-btn:hover{border-color:var(--rain);color:var(--rain);}
+  .refresh-btn:focus-visible{outline:2px solid var(--rain);outline-offset:2px;}
+
+  /* Hero: rain countdown */
+  .hero{
+    background:var(--surface);
+    border-radius:20px;
+    padding:36px 32px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+    border:1px solid var(--hairline);
+  }
+  .hero::before{
+    content:"";
+    position:absolute;top:0;right:0;bottom:0;width:38%;
+    background:linear-gradient(115deg, transparent, rgba(62,124,177,0.06) 40%, rgba(31,162,179,0.10));
+    pointer-events:none;
+  }
+  .hero-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;color:var(--slate);
+    text-transform:uppercase;letter-spacing:.08em;
+    margin-bottom:10px;
+  }
+  .hero-headline{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 5vw, 46px);
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    max-width:640px;
+    margin:0 0 14px;
+  }
+  .hero-headline .num{
+    color:var(--rain);
+  }
+  .hero-sub{
+    font-size:15px;color:var(--slate);
+    max-width:520px;line-height:1.5;
+  }
+  .hero-sub b{color:var(--ink);font-weight:600;}
+  .hero-meta{
+    display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;
+  }
+  .meta-item .val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px;font-weight:600;color:var(--ink);
+  }
+  .meta-item .lbl{
+    font-size:11px;color:var(--slate-soft);
+    text-transform:uppercase;letter-spacing:.06em;margin-top:2px;
+  }
+
+  /* Loading / error */
+  .status{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--slate);
+    padding:40px 0;text-align:center;
+  }
+  .status.err{color:var(--amber);}
+
+  /* Timeline (signature element) */
+  .timeline-card{
+    background:var(--surface);
+    border-radius:20px;
+    padding:28px 24px 20px;
+    margin-bottom:16px;
+    border:1px solid var(--hairline);
+  }
+  .tl-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;font-size:18px;margin:0 0 4px;
+  }
+  .tl-sub{font-size:13px;color:var(--slate-soft);margin-bottom:20px;}
+  .tl-scroll{
+    overflow-x:auto;
+    padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tl-track{
+    display:flex;
+    align-items:flex-end;
+    height:130px;
+    min-width:960px;
+    position:relative;
+    border-bottom:1px solid var(--line);
+  }
+  .tl-hour{
+    flex:1 0 20px;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:flex-end;
+    height:100%;
+    position:relative;
+    cursor:default;
+  }
+  .tl-hour.now .bar-col{ box-shadow: 0 0 0 2px var(--ink) inset; }
+  .tl-hour.daystart::before{
+    content:"";
+    position:absolute;left:0;top:0;bottom:0;
+    border-left:1px dashed var(--line);
+  }
+  .bar-col{
+    width:60%;
+    border-radius:3px 3px 0 0;
+    background:var(--line);
+    min-height:2px;
+    transition:height .3s;
+  }
+  .tl-hour .prob-tick{
+    position:absolute;top:-16px;font-family:'IBM Plex Mono',monospace;
+    font-size:9px;color:var(--slate-soft);
+  }
+  .tl-hour.rain-marker .prob-tick{color:var(--rain);font-weight:600;}
+  .tl-axis{
+    display:flex;min-width:960px;margin-top:6px;
+  }
+  .tl-axis .lab{
+    flex:1 0 20px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;color:var(--slate-soft);
+    text-align:center;
+  }
+  .tl-axis .lab.major{color:var(--ink);font-weight:600;}
+  .legend{
+    display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;
+  }
+  .legend-item{
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;color:var(--slate);
+  }
+  .swatch{width:10px;height:10px;border-radius:2px;}
+
+  /* Day summaries */
+  .days{
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;
+  }
+  @media(max-width:600px){.days{grid-template-columns:1fr;}}
+  .day-card{
+    background:var(--surface);border-radius:20px;padding:22px 22px;
+    border:1px solid var(--hairline);
+  }
+  .day-card h3{
+    font-family:'Space Grotesk',sans-serif;font-size:16px;margin:0 0 14px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .day-card h3 .drange{
+    font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;color:var(--slate-soft);
+  }
+  .day-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 0;border-top:1px solid var(--hairline);
+    font-size:13px;
+  }
+  .day-row:first-of-type{border-top:none;}
+  .day-row .rl{color:var(--slate);}
+  .day-row .rv{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink);}
+  .day-row .rv.wet{color:var(--rain);}
+
+  footer{
+    text-align:center;font-size:11px;color:var(--slate-soft);
+    font-family:'IBM Plex Mono',monospace;margin-top:24px;
+  }
+  footer a{color:var(--slate);}
+
+  @media(prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="place">Tuse <span>· Holbæk, Danmark</span></div>
+    <div class="updated">
+      <span id="updated-text">indlæser…</span>
+      <button class="refresh-btn" id="refresh-btn">Opdater</button>
+    </div>
+  </header>
+
+  <div id="status" class="status">Henter vejrdata for Tuse…</div>
+
+  <div id="content" style="display:none;">
+
+    <div class="hero">
+      <div class="hero-eyebrow">Regnvarsel</div>
+      <h1 class="hero-headline" id="hero-headline">—</h1>
+      <div class="hero-sub" id="hero-sub"></div>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <div class="val" id="meta-temp">—</div>
+          <div class="lbl">Nu, °C</div>
+        </div>
+        <div class="meta-item">
+          <div class="val" id="meta-wind">—</div>
+          <div class="lbl">Vind, m/s</div>
+        </div>
+        <div class="meta-item">
+          <div class="val" id="meta-humidity">—</div>
+          <div class="lbl">Luftfugtighed</div>
+        </div>
+        <div class="meta-item">
+          <div class="val" id="meta-total">—</div>
+          <div class="lbl">Nedbør, næste 48t</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-card">
+      <h2 class="tl-title">48 timers oversigt</h2>
+      <div class="tl-sub">Søjlehøjde = sandsynlighed for regn · farve = mængde pr. time</div>
+      <div class="tl-scroll">
+        <div class="tl-track" id="tl-track"></div>
+        <div class="tl-axis" id="tl-axis"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--line)"></span>Ingen/lidt regn</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--rain)"></span>Let regn</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--rain-deep)"></span>Kraftig regn</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--ink)"></span>Nu</div>
+      </div>
+    </div>
+
+    <div class="days" id="days"></div>
+
+  </div>
+
+  <footer>
+    Data: Open-Meteo (baseret på DMI HARMONIE-model) · Koordinater 55.71°N, 11.61°Ø
+  </footer>
+</div>
+
+<script>
+const LAT = 55.71, LON = 11.61;
+const API = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation_probability,precipitation,temperature_2m,weathercode,wind_speed_10m&current=temperature_2m,precipitation,weathercode,wind_speed_10m,relative_humidity_2m&timezone=Europe%2FCopenhagen&forecast_days=3`;
+
+const dayNames = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+
+function fmtHour(d){
+  return d.getHours().toString().padStart(2,'0') + ':00';
+}
+function fmtAmount(mm){
+  if(mm <= 0) return '0 mm';
+  if(mm < 1) return mm.toFixed(1) + ' mm';
+  return mm.toFixed(1) + ' mm';
+}
+
+async function fetchWithRetry(url, attempts=3, delayMs=1200){
+  let lastErr;
+  for(let i=0; i<attempts; i++){
+    try{
+      const fetchPromise = fetch(url, {cache:'no-store'});
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Tidsfrist overskredet')), 8000)
+      );
+      const res = await Promise.race([fetchPromise, timeoutPromise]);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    }catch(err){
+      lastErr = err;
+      if(i < attempts-1) await new Promise(r=>setTimeout(r, delayMs));
+    }
+  }
+  throw lastErr;
+}
+
+async function loadWeather(){
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+  statusEl.style.display = 'block';
+  statusEl.classList.remove('err');
+  statusEl.textContent = 'Henter vejrdata for Tuse…';
+  contentEl.style.display = 'none';
+
+  try{
+    const data = await fetchWithRetry(API);
+    render(data);
+    statusEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    document.getElementById('updated-text').textContent =
+      'Opdateret ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+  }catch(err){
+    statusEl.classList.add('err');
+    statusEl.innerHTML = `
+      Kunne ikke hente vejrdata efter flere forsøg.<br>
+      <span style="font-size:11px;opacity:.8;">Fejl: ${err.message || err.name}</span><br><br>
+      Tjek din internetforbindelse, eller tryk Opdater igen. Hvis det bliver ved, kan en browserindstilling eller sikkerhedsværktøj blokere forespørgsler til <code>api.open-meteo.com</code>.
+    `;
+  }
+}
+
+function render(data){
+  const now = new Date();
+  const times = data.hourly.time.map(t => new Date(t));
+  // find index of current or next hour
+  let startIdx = times.findIndex(t => t >= now);
+  if(startIdx === -1) startIdx = 0;
+  if(startIdx > 0) startIdx -= 1; // include the current hour for context
+
+  const N = 49; // 48 hours + current
+  const idxs = [];
+  for(let i=startIdx; i<startIdx+N && i<times.length; i++) idxs.push(i);
+
+  const hours = idxs.map(i => ({
+    time: times[i],
+    prob: data.hourly.precipitation_probability[i] ?? 0,
+    amount: data.hourly.precipitation[i] ?? 0,
+    temp: data.hourly.temperature_2m[i],
+    code: data.hourly.weathercode[i],
+  }));
+
+  const nowIdx = hours.findIndex(h => h.time.getHours() === now.getHours() && h.time.getDate() === now.getDate());
+  const future = hours.slice(Math.max(nowIdx,0));
+
+  // --- Hero: next rain ---
+  const RAIN_THRESHOLD = 0.1; // mm counted as "rain"
+  const nextRainIdx = future.findIndex(h => h.amount >= RAIN_THRESHOLD);
+  const heroHeadline = document.getElementById('hero-headline');
+  const heroSub = document.getElementById('hero-sub');
+
+  if(nextRainIdx === -1){
+    heroHeadline.innerHTML = 'Ingen regn i sigte <span class="num">de næste 48 timer</span>';
+    heroSub.innerHTML = 'Open-Meteos prognose for Tuse viser tørvejr hele perioden. Sandsynligheden for nedbør holder sig under tærsklen i alle 48 timer.';
+  } else {
+    const rainHour = future[nextRainIdx];
+    const hoursUntil = nextRainIdx; // since future[0] is "now" hour
+    // sum amount over the rain event (consecutive hours with rain)
+    let eventEnd = nextRainIdx;
+    while(eventEnd+1 < future.length && future[eventEnd+1].amount >= RAIN_THRESHOLD){
+      eventEnd++;
+    }
+    const eventTotal = future.slice(nextRainIdx, eventEnd+1).reduce((s,h)=>s+h.amount,0);
+    const durationHours = eventEnd - nextRainIdx + 1;
+
+    let whenText;
+    if(hoursUntil <= 0){
+      whenText = 'Det regner nu';
+    } else if(hoursUntil === 1){
+      whenText = 'Regn om <span class="num">1 time</span>';
+    } else {
+      whenText = `Regn om <span class="num">${hoursUntil} timer</span>`;
+    }
+    heroHeadline.innerHTML = whenText;
+
+    const dayLabel = rainHour.time.toDateString() === now.toDateString() ? 'i dag' :
+      (new Date(now.getTime()+86400000).toDateString() === rainHour.time.toDateString() ? 'i morgen' : dayNames[rainHour.time.getDay()].toLowerCase());
+
+    heroSub.innerHTML = `Forventet start <b>${fmtHour(rainHour.time)}</b> (${dayLabel}) · sandsynlighed <b>${rainHour.prob}%</b> · varer ca. <b>${durationHours} time${durationHours===1?'':'r'}</b> · i alt <b>${fmtAmount(eventTotal)}</b>`;
+  }
+
+  // --- meta ---
+  const cur = data.current;
+  document.getElementById('meta-temp').textContent = Math.round(cur.temperature_2m);
+  document.getElementById('meta-wind').textContent = Math.round(cur.wind_speed_10m);
+  document.getElementById('meta-humidity').textContent = cur.relative_humidity_2m + '%';
+  const total48 = future.reduce((s,h)=>s+h.amount,0);
+  document.getElementById('meta-total').textContent = fmtAmount(total48);
+
+  // --- timeline ---
+  const track = document.getElementById('tl-track');
+  const axis = document.getElementById('tl-axis');
+  track.innerHTML = '';
+  axis.innerHTML = '';
+
+  const maxProb = 100;
+  future.forEach((h, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'tl-hour';
+    if(i === 0) cell.className += ' now';
+    if(h.time.getHours() === 0) cell.className += ' daystart';
+    if(h.amount >= RAIN_THRESHOLD) cell.className += ' rain-marker';
+
+    const barH = Math.max(2, (h.prob/maxProb) * 96);
+    let color = 'var(--line)';
+    if(h.amount >= 4) color = 'var(--rain-deep)';
+    else if(h.amount >= RAIN_THRESHOLD) color = 'var(--rain)';
+
+    const tick = (h.prob >= 30) ? `<div class="prob-tick">${h.prob}%</div>` : '';
+
+    cell.innerHTML = `${tick}<div class="bar-col" style="height:${barH}px;background:${color};"></div>`;
+    cell.title = `${fmtHour(h.time)} · ${h.prob}% sandsynlighed · ${fmtAmount(h.amount)}`;
+    track.appendChild(cell);
+
+    const lab = document.createElement('div');
+    lab.className = 'lab' + (h.time.getHours()%6===0 ? ' major' : '');
+    lab.textContent = (h.time.getHours()%3===0) ? fmtHour(h.time).slice(0,2) : '';
+    axis.appendChild(lab);
+  });
+
+  // --- day summaries (today/next 24h, and next day) ---
+  const daysEl = document.getElementById('days');
+  daysEl.innerHTML = '';
+  const buckets = [future.slice(0,24), future.slice(24,48)];
+  const labels = ['Næste 24 timer', 'Derefter (24–48 timer)'];
+
+  buckets.forEach((bucket, bi) => {
+    if(bucket.length === 0) return;
+    const total = bucket.reduce((s,h)=>s+h.amount,0);
+    const maxProbDay = Math.max(...bucket.map(h=>h.prob));
+    const rainyHours = bucket.filter(h=>h.amount>=RAIN_THRESHOLD).length;
+    const tempMin = Math.round(Math.min(...bucket.map(h=>h.temp)));
+    const tempMax = Math.round(Math.max(...bucket.map(h=>h.temp)));
+    const start = bucket[0].time, end = bucket[bucket.length-1].time;
+
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    card.innerHTML = `
+      <h3>${labels[bi]} <span class="drange">${fmtHour(start)}–${fmtHour(end)}</span></h3>
+      <div class="day-row"><span class="rl">Nedbør i alt</span><span class="rv ${total>0?'wet':''}">${fmtAmount(total)}</span></div>
+      <div class="day-row"><span class="rl">Timer med regn</span><span class="rv ${rainyHours>0?'wet':''}">${rainyHours} t</span></div>
+      <div class="day-row"><span class="rl">Højeste regnsandsynlighed</span><span class="rv">${maxProbDay}%</span></div>
+      <div class="day-row"><span class="rl">Temperatur</span><span class="rv">${tempMin}° – ${tempMax}°</span></div>
+    `;
+    daysEl.appendChild(card);
+  });
+}
+
+document.getElementById('refresh-btn').addEventListener('click', loadWeather);
+loadWeather();
+setInterval(loadWeather, 15*60*1000); // auto-refresh every 15 min
+</script>
+</body>
+</html>
