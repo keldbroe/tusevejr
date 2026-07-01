@@ -372,7 +372,7 @@ function render(data){
   const heroSub = document.getElementById('hero-sub');
 
   if(nextRainIdx === -1){
-    heroHeadline.innerHTML = 'Ingen regn i sigte <span class="num">de næste 48 timer</span>';
+    heroHeadline.innerHTML = 'Ingen regn i sigte <span class="num">de næste 48 timer!</span>';
     heroSub.innerHTML = 'Open-Meteos prognose for Tuse viser tørvejr hele perioden. Sandsynligheden for nedbør holder sig under tærsklen i alle 48 timer.';
   } else {
     const rainHour = future[nextRainIdx];
