@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tuse — Regnvarsel</title>
+<link rel="icon" href="data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.85em' font-size='90'>💧</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -18,6 +19,23 @@
     --amber:#C98A2B;
     --line:#D7DFE4;
     --hairline: rgba(30,42,56,0.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --mist:#10151b;
+      --surface:#1a2229;
+      --ink:#e9eef3;
+      --slate:#93a4b2;
+      --slate-soft:#5f7080;
+      --rain:#5b9bd8;
+      --rain-deep:#33b7cf;
+      --amber:#e0a24d;
+      --line:#2a343d;
+      --hairline: rgba(255,255,255,0.08);
+    }
+    .hero::before{
+      background:linear-gradient(115deg, transparent, rgba(91,155,216,0.10) 40%, rgba(51,183,207,0.16));
+    }
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -76,6 +94,14 @@
     text-transform:uppercase;letter-spacing:.08em;
     margin-bottom:10px;
   }
+  .hero-main{
+    display:flex;align-items:flex-start;gap:18px;
+  }
+  .hero-icon{
+    flex:0 0 auto;width:52px;height:52px;color:var(--rain);
+    margin-top:4px;
+  }
+  .hero-icon svg{width:100%;height:100%;display:block;}
   .hero-headline{
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
@@ -196,6 +222,13 @@
     font-family:'Space Grotesk',sans-serif;font-size:16px;margin:0 0 14px;
     display:flex;justify-content:space-between;align-items:center;
   }
+  .day-title{
+    display:flex;align-items:center;gap:8px;
+  }
+  .day-icon{
+    flex:0 0 auto;width:20px;height:20px;color:var(--rain);
+  }
+  .day-icon svg{width:100%;height:100%;display:block;}
   .day-card h3 .drange{
     font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;color:var(--slate-soft);
   }
@@ -231,14 +264,19 @@
     </div>
   </header>
 
-  <div id="status" class="status">Henter vejrdata for Tuse…</div>
+  <div id="status" class="status" role="status" aria-live="polite">Henter vejrdata for Tuse…</div>
 
   <div id="content" style="display:none;">
 
     <div class="hero">
       <div class="hero-eyebrow">Regnvarsel</div>
-      <h1 class="hero-headline" id="hero-headline">—</h1>
-      <div class="hero-sub" id="hero-sub"></div>
+      <div class="hero-main">
+        <div class="hero-icon" id="hero-icon"></div>
+        <div>
+          <h1 class="hero-headline" id="hero-headline">—</h1>
+          <div class="hero-sub" id="hero-sub"></div>
+        </div>
+      </div>
       <div class="hero-meta">
         <div class="meta-item">
           <div class="val" id="meta-temp">—</div>
@@ -294,8 +332,48 @@ function fmtHour(d){
 }
 function fmtAmount(mm){
   if(mm <= 0) return '0 mm';
-  if(mm < 1) return mm.toFixed(1) + ' mm';
-  return mm.toFixed(1) + ' mm';
+  return mm.toFixed(1).replace('.', ',') + ' mm';
+}
+
+// --- Weather icons (WMO weather codes, monoline SVG set) ---
+const ICONS = {
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>`,
+  partlyDay: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7.2" r="3"/><path d="M9 2.7v1.3M4.5 7.2h1.3M5.3 3.7l.9.9M12.7 3.7l-.9.9" stroke-width="1.4"/><path d="M8.5 18h9a3.1 3.1 0 0 0 .3-6.18 4.6 4.6 0 0 0-8.9-1.6A3.6 3.6 0 0 0 8.5 18z"/></svg>`,
+  partlyNight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.3 3.3a3.6 3.6 0 1 0 3.2 5.1 2.7 2.7 0 0 1-3.2-5.1z"/><path d="M8.5 18h9a3.1 3.1 0 0 0 .3-6.18 4.6 4.6 0 0 0-8.9-1.6A3.6 3.6 0 0 0 8.5 18z"/></svg>`,
+  cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17.5h9.5a3.25 3.25 0 0 0 .4-6.48 4.75 4.75 0 0 0-9.2-1.8A3.75 3.75 0 0 0 7 17.5z"/></svg>`,
+  fog: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M7 13.5h9.5a3.25 3.25 0 0 0 .3-6.48 4.75 4.75 0 0 0-9 4.28"/><path d="M4 17h16M6 20h12"/></svg>`,
+  drizzle: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14.5h9.5a3.25 3.25 0 0 0 .3-6.48 4.75 4.75 0 0 0-9-1.8A3.6 3.6 0 0 0 7 14.5z"/><path d="M9 18v1.4M12.5 18v1.4M16 18v1.4" stroke-width="1.8"/></svg>`,
+  rain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14h9.5a3.25 3.25 0 0 0 .3-6.48 4.75 4.75 0 0 0-9-1.8A3.6 3.6 0 0 0 7 14z"/><path d="M8.5 17.5l-1.2 3M12.5 17.5l-1.2 3M16.5 17.5l-1.2 3" stroke-width="1.8"/></svg>`,
+  snow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14h9.5a3.25 3.25 0 0 0 .3-6.48 4.75 4.75 0 0 0-9-1.8A3.6 3.6 0 0 0 7 14z"/><path d="M9 17.2v3M7.6 18.7h2.8M13 17.2v3M11.6 18.7h2.8M16 17.2v3M14.6 18.7h2.8" stroke-width="1.3"/></svg>`,
+  thunder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 13.5h9.5a3.25 3.25 0 0 0 .3-6.48 4.75 4.75 0 0 0-9-1.8A3.6 3.6 0 0 0 7 13.5z"/><path d="M12.3 13.5l-2.8 4.6h2.4l-1.6 3.4 4.3-5.4h-2.3l1.8-2.6z" fill="currentColor" stroke="none"/></svg>`,
+};
+
+function weatherIcon(code, isDay){
+  if(code === 0) return isDay ? ICONS.sun : ICONS.moon;
+  if(code === 1 || code === 2) return isDay ? ICONS.partlyDay : ICONS.partlyNight;
+  if(code === 3) return ICONS.cloud;
+  if(code === 45 || code === 48) return ICONS.fog;
+  if([51,53,55,56,57].includes(code)) return ICONS.drizzle;
+  if([61,63,65,66,67,80,81,82].includes(code)) return ICONS.rain;
+  if([71,73,75,77,85,86].includes(code)) return ICONS.snow;
+  if([95,96,99].includes(code)) return ICONS.thunder;
+  return ICONS.cloud;
+}
+
+function weatherSeverity(code){
+  if([95,96,99].includes(code)) return 6;
+  if([65,67,75,82,86].includes(code)) return 5;
+  if([61,63,66,80,81,71,73,77].includes(code)) return 4;
+  if([51,53,55,56,57].includes(code)) return 3;
+  if(code === 45 || code === 48) return 2;
+  if(code === 1 || code === 2 || code === 3) return 1;
+  return 0;
+}
+
+function isDayHour(d){
+  const h = d.getHours();
+  return h >= 6 && h < 20;
 }
 
 async function fetchWithRetry(url, attempts=3, delayMs=1200){
@@ -317,6 +395,18 @@ async function fetchWithRetry(url, attempts=3, delayMs=1200){
   throw lastErr;
 }
 
+let lastUpdated = null;
+
+function updateRelativeTime(){
+  if(!lastUpdated) return;
+  const diffMin = Math.round((Date.now() - lastUpdated.getTime()) / 60000);
+  const el = document.getElementById('updated-text');
+  if(diffMin < 1) el.textContent = 'Opdateret lige nu';
+  else if(diffMin === 1) el.textContent = 'Opdateret for 1 minut siden';
+  else if(diffMin < 60) el.textContent = `Opdateret for ${diffMin} minutter siden`;
+  else el.textContent = 'Opdateret ' + lastUpdated.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+}
+
 async function loadWeather(){
   const statusEl = document.getElementById('status');
   const contentEl = document.getElementById('content');
@@ -330,8 +420,8 @@ async function loadWeather(){
     render(data);
     statusEl.style.display = 'none';
     contentEl.style.display = 'block';
-    document.getElementById('updated-text').textContent =
-      'Opdateret ' + new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'});
+    lastUpdated = new Date();
+    updateRelativeTime();
   }catch(err){
     statusEl.classList.add('err');
     statusEl.innerHTML = `
@@ -344,6 +434,9 @@ async function loadWeather(){
 
 function render(data){
   const now = new Date();
+
+  document.getElementById('hero-icon').innerHTML = weatherIcon(data.current.weathercode, isDayHour(now));
+
   const times = data.hourly.time.map(t => new Date(t));
   // find index of current or next hour
   let startIdx = times.findIndex(t => t >= now);
@@ -455,10 +548,13 @@ function render(data){
     const tempMax = Math.round(Math.max(...bucket.map(h=>h.temp)));
     const start = bucket[0].time, end = bucket[bucket.length-1].time;
 
+    const repHour = bucket.reduce((a,b) => weatherSeverity(b.code) > weatherSeverity(a.code) ? b : a);
+    const icon = weatherIcon(repHour.code, isDayHour(repHour.time));
+
     const card = document.createElement('div');
     card.className = 'day-card';
     card.innerHTML = `
-      <h3>${labels[bi]} <span class="drange">${fmtHour(start)}–${fmtHour(end)}</span></h3>
+      <h3><span class="day-title"><span class="day-icon">${icon}</span>${labels[bi]}</span> <span class="drange">${fmtHour(start)}–${fmtHour(end)}</span></h3>
       <div class="day-row"><span class="rl">Nedbør i alt</span><span class="rv ${total>0?'wet':''}">${fmtAmount(total)}</span></div>
       <div class="day-row"><span class="rl">Timer med regn</span><span class="rv ${rainyHours>0?'wet':''}">${rainyHours} t</span></div>
       <div class="day-row"><span class="rl">Højeste regnsandsynlighed</span><span class="rv">${maxProbDay}%</span></div>
@@ -471,6 +567,7 @@ function render(data){
 document.getElementById('refresh-btn').addEventListener('click', loadWeather);
 loadWeather();
 setInterval(loadWeather, 15*60*1000); // auto-refresh every 15 min
+setInterval(updateRelativeTime, 30*1000); // keep "opdateret for X min siden" fresh
 </script>
 </body>
 </html>

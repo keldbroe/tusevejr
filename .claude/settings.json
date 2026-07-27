@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chromium-cli --session tuse)",
+      "Bash(node -e \"require\\('playwright'\\)\")",
+      "Bash(kill %1)",
+      "Bash(nohup python -m http.server 8791)",
+      "Bash(timeout 15 bash -c 'until curl -sf http://localhost:8791/index.html >/dev/null; do sleep 1; done')",
+      "Read(//c/Program Files \\\\\\(x86\\\\\\)/Microsoft/Edge/Application/**)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --screenshot=\"/c/Users/keld/AppData/Local/Temp/claude/c--Users-keld-Documents-www-tusevejr/338fa542-c8b7-4437-a848-608384b73da8/scratchpad/tuse_light.png\" --window-size=1000,1400 --virtual-time-budget=8000 \"http://localhost:8791/index.html\")",
+      "Read(//c/Users/keld/AppData/Local/Temp/claude/c--Users-keld-Documents-www-tusevejr/338fa542-c8b7-4437-a848-608384b73da8/scratchpad//**)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --no-sandbox --screenshot=\"C:\\\\Users\\\\keld\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-keld-Documents-www-tusevejr\\\\338fa542-c8b7-4437-a848-608384b73da8\\\\scratchpad\\\\tuse_light.png\" --window-size=1000,1400 --virtual-time-budget=8000 \"http://localhost:8791/index.html\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(ls -la \"/c/Users/keld/AppData/Local/Temp/claude/c--Users-keld-Documents-www-tusevejr/338fa542-c8b7-4437-a848-608384b73da8/scratchpad/\")",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --no-sandbox --blink-settings=preferredColorScheme=1 --screenshot=\"C:\\\\Users\\\\keld\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-keld-Documents-www-tusevejr\\\\338fa542-c8b7-4437-a848-608384b73da8\\\\scratchpad\\\\tuse_forced_light.png\" --window-size=1000,900 --virtual-time-budget=8000 \"http://localhost:8791/index.html\")",
+      "Bash(jobs -l)"
+    ]
+  }
+}
