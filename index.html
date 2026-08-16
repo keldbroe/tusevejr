@@ -134,6 +134,36 @@
     text-transform:uppercase;letter-spacing:.06em;margin-top:2px;
   }
 
+  /* Hero mini-forecast strip (wide screens only, see media query below) */
+  .hero-strip{
+    grid-area:strip;
+    display:none;
+    align-items:center;
+    justify-content:space-evenly;
+    gap:6px;
+    max-width:520px;
+    margin:0 auto;
+    padding:0 24px;
+    border-left:1px solid var(--hairline);
+    border-right:1px solid var(--hairline);
+  }
+  .strip-item{
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    min-width:0;
+  }
+  .strip-item .sh{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--slate-soft);
+  }
+  .strip-item .si{width:20px;height:20px;color:var(--slate);}
+  .strip-item .si svg{width:100%;height:100%;display:block;}
+  .strip-item .st{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--ink);
+  }
+  .strip-item .sp{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--slate-soft);
+  }
+  .strip-item.wet .si,.strip-item.wet .sp{color:var(--rain);font-weight:600;}
+
   /* Loading / error */
   .status{
     font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--slate);
@@ -226,14 +256,15 @@
   @media(min-width:860px){
     .hero{
       display:grid;
-      grid-template-columns:1fr auto;
-      grid-template-areas:"eyebrow eyebrow" "main meta";
+      grid-template-columns:minmax(0,auto) 1fr auto;
+      grid-template-areas:"eyebrow eyebrow eyebrow" "main strip meta";
       align-items:center;
-      column-gap:40px;
+      column-gap:28px;
     }
+    .hero-strip{display:flex;}
     .hero-meta{
       flex-direction:column;align-items:flex-start;gap:20px;
-      margin-top:0;padding-left:32px;border-left:1px solid var(--hairline);
+      margin-top:0;padding-left:28px;border-left:1px solid var(--hairline);
     }
     .days{grid-template-columns:repeat(2,minmax(260px,440px));justify-content:center;gap:20px;}
   }
@@ -314,6 +345,7 @@
           <div class="hero-sub" id="hero-sub"></div>
         </div>
       </div>
+      <div class="hero-strip" id="hero-strip"></div>
       <div class="hero-meta">
         <div class="meta-item">
           <div class="val" id="meta-temp">—</div>
@@ -530,6 +562,22 @@ function render(data){
 
     heroSub.innerHTML = `Forventet start <b>${fmtHour(rainHour.time)}</b> (${dayLabel}) · sandsynlighed <b>${rainHour.prob}%</b> · varer ca. <b>${durationHours} time${durationHours===1?'':'r'}</b> · i alt <b>${fmtAmount(eventTotal)}</b>`;
   }
+
+  // --- hero mini-forecast strip (next few hours, shown on wide screens) ---
+  const stripEl = document.getElementById('hero-strip');
+  stripEl.innerHTML = '';
+  future.slice(1, 7).forEach(h => {
+    const wet = h.amount >= RAIN_THRESHOLD;
+    const item = document.createElement('div');
+    item.className = 'strip-item' + (wet ? ' wet' : '');
+    item.innerHTML = `
+      <span class="sh">${fmtHour(h.time).slice(0,2)}</span>
+      <span class="si">${weatherIcon(h.code, isDayHour(h.time))}</span>
+      <span class="st">${Math.round(h.temp)}°</span>
+      <span class="sp">${h.prob}%</span>
+    `;
+    stripEl.appendChild(item);
+  });
 
   // --- meta ---
   const cur = data.current;
